@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download de Vídeos do TikTok</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 300px;
+            padding: 8px;
+            font-size: 16px;
+        }
+        input[type="submit"] {
+            padding: 8px 16px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+        }
+        .mensagem {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border: 1px solid #ccc;
+        }
+        .voltar {
+            margin-top: 20px;
+        }
+        .voltar a {
+            text-decoration: none;
+            color: #007bff;
+            font-size: 16px;
+        }
+        .voltar a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Download de Vídeos do TikTok</h1>
+    <form method="POST">
+        <label for="url">Cole a URL do vídeo:</label><br>
+        <input type="text" id="url" name="url" placeholder="https://www.tiktok.com/..." required>
+        <br><br>
+        <label for="resolucao">Selecione a resolução:</label><br>
+        <select id="resolucao" name="resolucao">
+            <option value="1080p">1080p</option>
+            <option value="720p">720p</option>
+            <option value="576p">576p</option>
+        </select>
+        <input type="submit" name="baixar_direto" value="Baixar">
+        <input type="submit" name="extrair" value="Extrair Informações">
+    </form>
+
+    {% if informacoes %}
+    <h2>Informações do Vídeo:</h2>
+    <pre>{{ informacoes }}</pre>
+
+    <form method="POST">
+        <input type="hidden" name="url" value="{{ request.form.url }}">
+        <label for="formato">Insira o código do formato para baixar:</label><br>
+        <input type="text" id="formato" name="formato" placeholder="Ex: 18" required>
+        <input type="submit" name="baixar" value="Baixar Vídeo">
+    </form>
+    {% endif %}
+
+    {% if mensagem %}
+    <div class="mensagem">
+        {{ mensagem }}
+    </div>
+    {% endif %}
+
+    <div class="voltar">
+        <a href="/">Voltar para a página inicial</a>
+    </div>
+</body>
+</html>
