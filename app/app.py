@@ -447,8 +447,106 @@ def tiktok():
             else:
                 mensagem = "Por favor, insira uma URL e um formato válidos."
 
-    return render_template("tiktok.html", informacoes=informacoes, mensagem=mensagem)    
+    return render_template("tiktok.html", informacoes=informacoes, mensagem=mensagem)
 
+@app.route("/facebook", methods=["GET", "POST"])
+def facebook():
+    informacoes = None
+    mensagem = None
+
+    if request.method == "POST":
+        url = request.form.get("url")
+
+        if "baixar_direto" in request.form:
+            if url:
+                try:
+                    resolucao = request.form.get("resolucao")
+                    if resolucao == "hd":
+                        # Comando para HD
+                        comando_yt_dlp = [
+                            "yt-dlp", "--youtube-skip-dash-manifest", "-f", "hd", "-g", url
+                        ]
+                    elif resolucao == "sd":
+                        # Comando para SD
+                        comando_yt_dlp = [
+                            "yt-dlp", "--youtube-skip-dash-manifest", "-f", "sd", "-g", url
+                        ]
+                    else:
+                        mensagem = "Resolução inválida."
+                        return render_template("facebook.html", informacoes=informacoes, mensagem=mensagem)
+
+                    # Executa o yt-dlp para obter a URL do vídeo
+                    resultado_yt_dlp = subprocess.run(comando_yt_dlp, capture_output=True, text=True)
+                    if resultado_yt_dlp.returncode != 0:
+                        mensagem = f"Erro ao obter a URL do vídeo:\n{resultado_yt_dlp.stderr}"
+                        return render_template("facebook.html", informacoes=informacoes, mensagem=mensagem)
+
+                    url_video = resultado_yt_dlp.stdout.strip()
+
+                    # Comando ffmpeg para processar o vídeo
+                    comando_ffmpeg = [
+                        "ffmpeg", "-i", url_video, "-c", "copy", "-reset_timestamps", "1",
+                        "-avoid_negative_ts", "make_zero", "-f", "mp4", "video_temp.mp4"
+                    ]
+                    resultado_ffmpeg = subprocess.run(comando_ffmpeg, capture_output=True, text=True)
+                    if resultado_ffmpeg.returncode != 0:
+                        mensagem = f"Erro ao processar o vídeo:\n{resultado_ffmpeg.stderr}"
+                        return render_template("facebook.html", informacoes=informacoes, mensagem=mensagem)
+
+                    # Envia o arquivo para o usuário
+                    return send_file("video_temp.mp4", as_attachment=True)
+
+                except Exception as e:
+                    mensagem = f"Ocorreu um erro: {e}"
+                finally:
+                    if os.path.exists("video_temp.mp4"):
+                        os.remove("video_temp.mp4")
+            else:
+                mensagem = "Por favor, insira uma URL válida."
+
+        elif "extrair" in request.form:
+            if url:
+                try:
+                    comando = [
+                        "yt-dlp", "-v", "-F", "-o", "%(id)s.%(ext)s", url
+                    ]
+                    resultado = subprocess.run(comando, capture_output=True, text=True)
+
+                    if resultado.returncode == 0:
+                        informacoes = resultado.stdout
+                    else:
+                        informacoes = f"Erro ao extrair informações:\n{resultado.stderr}"
+                except Exception as e:
+                    informacoes = f"Ocorreu um erro: {e}"
+            else:
+                informacoes = "Por favor, insira uma URL válida."
+
+        elif "baixar" in request.form:
+            formato = request.form.get("formato")
+            if url and formato:
+                try:
+                    nome_arquivo = "video_temp.mp4"
+                    comando_yt_dlp = [
+                        "yt-dlp", "-f", formato, "-o", nome_arquivo, url
+                    ]
+                    resultado_yt_dlp = subprocess.run(comando_yt_dlp, capture_output=True, text=True)
+
+                    if resultado_yt_dlp.returncode != 0:
+                        mensagem = f"Erro ao baixar o vídeo:\n{resultado_yt_dlp.stderr}"
+                        return render_template("facebook.html", informacoes=informacoes, mensagem=mensagem)
+
+                    return send_file(nome_arquivo, as_attachment=True)
+
+                except Exception as e:
+                    mensagem = f"Ocorreu um erro: {e}"
+                finally:
+                    if os.path.exists(nome_arquivo):
+                        os.remove(nome_arquivo)
+            else:
+                mensagem = "Por favor, insira uma URL e um formato válidos."
+
+    return render_template("facebook.html", informacoes=informacoes, mensagem=mensagem)
+    
 # Rota para a página de Lista m3u8
 @app.route("/m3u8", methods=["GET", "POST"])
 def m3u8():
